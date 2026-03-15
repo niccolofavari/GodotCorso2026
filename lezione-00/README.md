@@ -73,9 +73,7 @@ Abbiamo già preparato alcune cose per te, così non perdiamo tempo in classe a 
 
 Premi il bottone **▶** in alto al centro (o `F5`) per avviare il gioco.
 
-Si aprirà una finestra nera — è normale, non abbiamo ancora aggiunto nulla! Chiudila con `Esc` o chiudi la finestra.
-
-Nella prossima lezione iniziamo a costruire.
+Si aprirà una finestra grigia — è normale, non abbiamo ancora aggiunto nulla! Chiudila pure.
 
 ---
 
@@ -85,7 +83,7 @@ Nella cartella `assets/` trovi tutto il materiale grafico e sonoro che useremo d
 
 | Cartella | Contenuto |
 |---|---|
-| `sprites/` | Il personaggio, i nemici, le monete, il tileset |
+| `sprites/` | Le immagini per il personaggio, i nemici, le monete, il livello |
 | `fonts/` | Font in stile pixel art |
 | `sounds/` | Effetti sonori (salto, moneta, esplosione...) |
-| `music/` | Musica di sottofondo |
+| `music/` | Musica di sottofondo (molto brutta) |
