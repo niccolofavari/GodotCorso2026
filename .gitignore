@@ -1,0 +1,16 @@
+# Godot 4+ cache (generata automaticamente, inutile in repo)
+.godot/
+
+# Android export
+/android/
+
+# macOS
+.DS_Store
+
+# Export presets (contengono path locali)
+export_presets.cfg
+
+# Mono/C# (se mai usato)
+.mono/
+data_*/
+mono_crash.*.json
