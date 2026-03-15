@@ -1,164 +1,476 @@
-# Lezione 02 – Scena, Player e TileMap
+# Lezione 02 – Camera, Velocità e Piattaforme Mobili
 
-In questa lezione partiamo da zero e costruiamo la struttura base del gioco: la scena principale, il personaggio giocabile e il livello fatto con le tile.
+Nella lezione precedente abbiamo costruito il livello, creato il player e scritto il primo script di movimento. Oggi partiamo da lì e miglioriamo il gioco: aggiungiamo una camera che segue il personaggio, sistemiamo la velocità e costruiamo piattaforme mobili su cui saltare.
+
+---
+
+## Cosa abbiamo adesso
+
+Apri la cartella `lezione-02` in Godot (come hai fatto nella lezione precedente: **Import** → seleziona il file `project.godot` dentro `lezione-02/`).
+
+Premi **▶** (o `F5`) per avviare il gioco. Ecco cosa trovi:
+
+- Un **livello** costruito con le tile (lo sfondo, le piattaforme, il primo piano)
+- Il **player** che si muove con le frecce e salta con Spazio
+- Il tasto **Esc** chiude il gioco
+
+Prova a muoverti un po'. Dovresti notare **tre problemi**:
+
+1. **Il player è troppo veloce** — si muove così rapidamente che è difficile da controllare
+2. **La camera non segue il player** — quando esci dallo schermo, non vedi più il personaggio
+3. **Non ci sono ostacoli interessanti** — il livello è piatto, mancano piattaforme su cui saltare
+
+In questa lezione risolviamo tutti e tre questi problemi.
+
+<!-- 📸 SCREENSHOT: il gioco in esecuzione allo stato iniziale di lezione-02 — il player sul livello, senza camera che segue -->
 
 ---
 
 ## Cosa costruiamo oggi
 
-- La **scena principale** (`game.tscn`) — il contenitore di tutto il gioco
-- La **scena Player** (`player.tscn`) — il personaggio che controlliamo
-- Il **TileMap** — il livello disegnato con le tile
-- Il primo script di **movimento**
-
-<!-- SCREENSHOT: risultato finale della lezione — player che cammina sul livello -->
-
----
-
-## 1. La scena principale
-
-In Godot, ogni gioco è fatto di **scene**. Una scena è un albero di **nodi**, ognuno con uno scopo preciso.
-
-<!-- SCREENSHOT: albero della scena Game con i tre TileMapLayer visibili nel pannello Scene -->
-
-Crea una nuova scena con un nodo radice **Node2D** e salvala come `game.tscn` nella cartella `scenes/`.
-
-Dentro `Game` aggiungi tre nodi **TileMapLayer**, uno per ogni piano del livello:
-
-| Layer | Scopo |
-|---|---|
-| `TileMapLayer background` | Sfondo decorativo (non solido) |
-| `TileMapLayer platforms` | Piattaforme su cui il player cammina (con collisione) |
-| `TileMapLayer foreground` | Elementi davanti al player (decorativi) |
-
-Tutti e tre usano lo stesso TileSet (`world_tileset_resource.tres`), che trovi già pronto in `assets/sprites/`.
-
-> [!TIP]
-> → [Cosa sono gli asset e come Godot li importa?](../appendice/asset.md)
+- ✏️ **Rallentiamo il player** — cambiamo i valori di velocità e salto nello script
+- 📷 **Aggiungiamo la Camera2D** — segue il player e non mostra il vuoto fuori dalla mappa
+- 🟫 **Creiamo una piattaforma mobile** — una nuova scena con un corpo fisico che si muove
+- 🎬 **Animiamo la piattaforma** — usiamo l'AnimationPlayer per farla muovere avanti e indietro
+- 🗂️ Qualche ritocco: l'ordine di disegno del player e piccole modifiche al livello
 
 ---
 
-## 2. Il Player
+## 1. Rallentiamo il player
 
-Il player è una scena separata (`player.tscn`). Separare il player dalla scena principale ci permette di riutilizzarlo facilmente in livelli diversi.
+Il player attuale si muove a `SPEED = 300` e salta con `JUMP_VELOCITY = -400`. Per il nostro gioco in pixel art (la finestra è larga solo 432 pixel!) sono valori troppo alti: il personaggio attraversa lo schermo in un lampo.
 
-La struttura della scena è:
+### Come fare
 
-```
-CharacterBody2D        ← root: gestisce la fisica
-├── AnimatedSprite2D   ← l'immagine animata del personaggio
-└── CollisionShape2D   ← la forma usata per le collisioni
-```
+1. Nel pannello **FileSystem** in basso a sinistra, naviga nella cartella `scripts/`
+2. Fai doppio click su `player.gd` — si apre l'editor di script
 
-### CharacterBody2D
+<!-- 📸 SCREENSHOT: pannello FileSystem con la cartella scripts/ aperta e player.gd evidenziato -->
 
-È il tipo di nodo pensato per i personaggi controllati dal codice. Gestisce automaticamente la gravità, il pavimento e le collisioni con l'ambiente.
-
-> [!NOTE]
-> → [Approfondimento sui tipi di corpo fisico](../appendice/layer-di-collisione.md)
-
-### AnimatedSprite2D
-
-Mostra l'animazione del personaggio. Usa un **SpriteFrames** — una raccolta di frame ritagliati dallo spritesheet `knight.png`.
-
-<!-- SCREENSHOT: pannello SpriteFrames con l'animazione idle aperta e i 4 frame visibili -->
-
-Per creare l'animazione `idle`:
-1. Seleziona `AnimatedSprite2D` → Inspector → **Sprite Frames** → **New SpriteFrames**
-2. In basso si apre il pannello SpriteFrames — rinomina l'animazione `default` in `idle`
-3. Clicca sul bottone **Add Frames from Sprite Sheet** (l'icona con la griglia)
-4. Seleziona `assets/sprites/knight.png`, imposta griglia **8×8**, frame size **32×32**
-5. Seleziona i 4 frame della riga `IDLE` e clicca **Add 4 Frame(s)**
-
-<!-- SCREENSHOT: dialog "Select Frames" con i 4 frame IDLE selezionati -->
-
-Imposta **Autoplay** su `idle` così l'animazione parte subito.
-
-### CollisionShape2D
-
-Definisce la forma fisica del player — quella che "tocca" davvero il mondo.
-
-Usa una **CircleShape2D** con raggio 5px, centrata ai piedi del personaggio (`position Y = -5`).
-
-<!-- SCREENSHOT: player nel viewport con la forma di collisione cerchio visibile in verde -->
-
----
-
-## 3. Script di movimento
-
-Seleziona il nodo `CharacterBody2D` e aggiungi uno script. Scegli il template **CharacterBody2D: Basic Movement** — Godot genera già lo scheletro giusto per un platform game.
-
-<!-- SCREENSHOT: dialog "Attach Node Script" con il template Basic Movement selezionato -->
-
-Salva lo script in `scripts/player.gd`. Il codice finale:
+3. Trova queste due righe in alto:
 
 ```gdscript
-extends CharacterBody2D
-
-const SPEED = 100.0
-const JUMP_VELOCITY = -270.0
-
-func _physics_process(delta: float) -> void:
-    # Gravità: se siamo in aria, acceleriamo verso il basso
-    if not is_on_floor():
-        velocity += get_gravity() * delta
-
-    # Salto: solo se siamo a terra
-    if Input.is_action_just_pressed("ui_accept") and is_on_floor():
-        velocity.y = JUMP_VELOCITY
-
-    # Movimento orizzontale
-    var direction := Input.get_axis("ui_left", "ui_right")
-    if direction:
-        velocity.x = direction * SPEED
-    else:
-        velocity.x = move_toward(velocity.x, 0, SPEED)
-
-    move_and_slide()
+const SPEED = 300.0
+const JUMP_VELOCITY = -400.0
 ```
 
-**Concetti chiave:**
+4. Cambiale in:
 
-| Funzione | Cosa fa |
-|---|---|
-| `_physics_process(delta)` | Viene chiamata 60 volte al secondo (ogni frame fisico) |
-| `get_gravity()` | Legge la gravità dai Project Settings |
-| `is_on_floor()` | Vale `true` se il player è appoggiato su una superficie |
-| `move_toward(x, 0, SPEED)` | Decelera gradualmente fino a fermarsi |
-| `move_and_slide()` | Muove il corpo gestendo le collisioni automaticamente |
+```gdscript
+const SPEED = 100.0
+const JUMP_VELOCITY = -270.0
+```
+
+5. Salva con **Ctrl+S**
+
+> [!IMPORTANT]
+> **Cosa sono queste righe?** Sono due **costanti** — dei valori con un nome. `const` significa che non cambieranno mai durante il gioco. Scrivere `const SPEED = 100.0` è come dire: "ogni volta che nel codice leggi SPEED, intendo il numero 100". Dare un nome ai numeri rende il codice leggibile: `direction * SPEED` si capisce, `direction * 100.0` un po' meno, e tra una settimana non ricorderesti perché avevi messo proprio 100.
+
+> [!IMPORTANT]
+> **Perché il salto è un numero negativo?** In Godot (e in quasi tutti i motori di gioco 2D), l'asse Y è **capovolto** rispetto a quello di matematica: Y cresce verso il **basso**, non verso l'alto. Quindi per andare verso l'alto, la velocità deve essere negativa. `-270` significa "vai verso l'alto a velocità 270".
+
+### Prova
+
+Premi **▶**. Il player ora dovrebbe muoversi più lentamente e fare salti più corti. Giocaci un po': il feeling è molto diverso.
+
+---
+
+## 2. Aggiungiamo la Camera2D
+
+Adesso il gioco ha un problema evidente: se il player si muove a destra, esce dallo schermo e non lo vedi più. Ci serve una **camera** che lo segua.
+
+### Perché la camera è figlia del player?
+
+In Godot, quando un nodo è **figlio** di un altro nodo, lo segue. Se metti la Camera2D dentro il player, la camera si muove automaticamente con lui — senza scrivere nemmeno una riga di codice.
+
+> [!IMPORTANT]
+> **Perché non mettere la camera nella scena principale?** Se la camera fosse figlia di `Game` (la scena principale), starebbe ferma. Dovresti scrivere uno script per farla seguire il player a ogni frame. Mettendola come figlia del player, Godot fa tutto da solo. In Godot si ragiona spesso così: **la posizione nell'albero dei nodi determina il comportamento**.
+
+### Come fare
+
+1. Apri la scena del player: nel **FileSystem**, vai nella cartella `scenes/` e fai doppio click su `player.tscn`
+2. Nel pannello **Scene** (in alto a sinistra) vedrai l'albero dei nodi del player:
+
+```
+CharacterBody2D
+├── AnimatedSprite2D
+└── CollisionShape2D
+```
+
+3. Fai **click destro** su `CharacterBody2D` (il nodo radice) → **Add Child Node...**
+
+<!-- 📸 SCREENSHOT: click destro su CharacterBody2D con il menu contextuale aperto, "Add Child Node" evidenziato -->
+
+4. Si apre una finestra di ricerca. Scrivi `Camera2D` nella barra di ricerca in alto
+5. Seleziona **Camera2D** e clicca **Create**
+
+<!-- 📸 SCREENSHOT: finestra "Create New Node" con "Camera2D" nella barra di ricerca e il nodo selezionato -->
+
+Ora l'albero del player è:
+
+```
+CharacterBody2D
+├── AnimatedSprite2D
+├── CollisionShape2D
+└── Camera2D            ← nuova!
+```
+
+### Attiva il Position Smoothing
+
+Seleziona il nodo `Camera2D` che hai appena aggiunto. Nel pannello **Inspector** a destra, cerca la sezione **Position Smoothing** e metti la spunta su **Enabled**.
+
+<!-- 📸 SCREENSHOT: Inspector della Camera2D con Position Smoothing → Enabled spuntato -->
+
+> [!TIP]
+> **Cosa fa il Position Smoothing?** Senza smoothing, la camera è incollata al player: segue ogni suo movimento in modo secco e istantaneo. Con lo smoothing, la camera "rincorre" il player con un leggero ritardo fluido. Prova ad accenderlo e spegnerlo: vedrai la differenza immediatamente.
+
+### Prova
+
+Premi **▶**. Adesso la camera segue il player! Muoviti a destra e a sinistra — il personaggio resta sempre visibile.
+
+Ma c'è un problema: se arrivi ai **bordi della mappa**, la camera mostra il **vuoto grigio** oltre le tile. Lo sistemiamo ora.
+
+<!-- 📸 SCREENSHOT: gioco in esecuzione con la camera che mostra il vuoto grigio oltre il bordo della mappa -->
+
+---
+
+## 3. I limiti della camera
+
+Vogliamo che la camera non vada mai oltre i bordi della mappa. Per farlo dobbiamo dire alla camera: "il tuo bordo sinistro non può andare sotto X=0, il tuo bordo destro non può andare oltre la fine delle tile", e così via.
+
+Potremmo scrivere questi numeri a mano, ma se poi cambiamo la dimensione del livello dovremmo ricordare di aggiornarli. Meglio scrivere uno **script** che li calcoli automaticamente leggendo la dimensione del TileMap.
+
+### Passo 1: Aggiungere il gruppo "limits" al TileMap
+
+Lo script della camera ha bisogno di trovare il TileMap per leggerne le dimensioni. In Godot, un **gruppo** è un'etichetta che puoi attaccare a qualsiasi nodo per ritrovarlo facilmente dal codice.
+
+1. Apri la scena `game.tscn` (doppio click nel FileSystem)
+2. Nel pannello **Scene**, seleziona il nodo `TileMapLayer platforms`
+3. Nel pannello a destra, clicca sulla tab **Node** (accanto a Inspector)
+4. Clicca sulla sezione **Groups**
+5. Scrivi `limits` nel campo di testo e clicca **Add**
+
+<!-- 📸 SCREENSHOT: pannello Node → Groups con il campo "limits" scritto e il bottone Add visibile. Il nodo selezionato è "TileMapLayer platforms" -->
+
+> [!IMPORTANT]
+> **Perché usiamo un gruppo e non il nome del nodo?** Potremmo cercare il nodo per nome (`get_node("TileMapLayer platforms")`), ma il nome è fragile: se lo rinomini, il codice smette di funzionare. Un gruppo è un'etichetta separata dal nome — puoi rinominare il nodo quanto vuoi, finché ha il gruppo `limits` lo script lo trova.
+
+### Passo 2: Creare lo script della camera
+
+1. Torna nella scena `player.tscn` (doppio click su `player.tscn` nel FileSystem)
+2. Seleziona il nodo `Camera2D` nell'albero della scena
+3. Clicca sull'icona **📜** (Attach Script) in alto nel pannello Scene — è il bottone con la pergamena
+
+<!-- 📸 SCREENSHOT: pannello Scene con Camera2D selezionato e il bottone "Attach Script" (icona pergamena) evidenziato -->
+
+4. Si apre la finestra di creazione script:
+   - **Path**: cambia il percorso in `res://scripts/camera_2d.gd` (così lo salviamo nella cartella scripts, non in scenes)
+   - **Template**: scegli **Empty** (non ci serve il template predefinito)
+   - Clicca **Create**
+
+<!-- 📸 SCREENSHOT: finestra "Attach Node Script" con il path impostato su res://scripts/camera_2d.gd e Template su Empty -->
+
+5. Si apre l'editor di script con un file quasi vuoto. Scrivi questo codice:
+
+```gdscript
+extends Camera2D
+```
+
+Questa prima riga dice: "questo script controlla un nodo di tipo Camera2D". Ogni script in Godot inizia con `extends` seguito dal tipo di nodo a cui è attaccato.
+
+6. Adesso aggiungi la funzione che calcola i limiti. Scrivi sotto (lascia una riga vuota dopo `extends Camera2D`):
+
+```gdscript
+func _ready() -> void:
+    var tilemap = get_tree().get_first_node_in_group("limits")
+```
 
 > [!NOTE]
-> `delta` è il tempo trascorso dall'ultimo frame in secondi. Moltiplicare per `delta` rende il movimento indipendente dalla velocità del computer.
+> **Cosa significa?**
+> - `func _ready()` — è una funzione speciale di Godot. Viene eseguita **una sola volta**, nel momento in cui il nodo appare nel gioco. Perfetto per configurare cose all'inizio.
+> - `var tilemap` — crea una **variabile** (un contenitore con un nome). La chiamiamo `tilemap` perché conterrà il riferimento al nostro TileMap.
+> - `get_tree().get_first_node_in_group("limits")` — cerca nell'intera scena il primo nodo che ha il gruppo `limits`. È il `TileMapLayer platforms` a cui abbiamo aggiunto il gruppo prima.
 
-### Controlli
+7. Aggiungi le righe successive che leggono la dimensione della mappa:
 
-| Tasto | Azione |
-|---|---|
-| ← → (frecce) | Movimento orizzontale |
-| Spazio / Enter | Salto |
-| Esc | Esci dal gioco |
+```gdscript
+    var used_rect = tilemap.get_used_rect()
+    var tile_size = tilemap.tile_set.tile_size
+```
+
+> [!NOTE]
+> - `get_used_rect()` restituisce il **rettangolo** che contiene tutte le tile che hai disegnato. Non è in pixel, è in "numero di tile" (es. 18 tile di larghezza × 15 di altezza).
+> - `tile_set.tile_size` è la dimensione di una singola tile in pixel (nel nostro caso 16×16).
+
+8. Infine, imposta i limiti della camera:
+
+```gdscript
+    limit_left   = 0
+    limit_top    = 0
+    limit_right  = used_rect.end.x * tile_size.x
+    limit_bottom = used_rect.end.y * tile_size.y
+```
+
+> [!NOTE]
+> Qui facciamo una moltiplicazione: "quante tile ci sono in orizzontale" × "quanto è larga una tile in pixel" = "quanti pixel è larga la mappa". Stessa cosa in verticale. Così la camera sa dove finisce il mondo.
+
+### Il codice completo
+
+Controlla che il tuo `camera_2d.gd` sia così:
+
+```gdscript
+extends Camera2D
+
+
+func _ready() -> void:
+    var tilemap = get_tree().get_first_node_in_group("limits")
+
+    var used_rect = tilemap.get_used_rect()
+    var tile_size = tilemap.tile_set.tile_size
+
+    limit_left   = 0
+    limit_top    = 0
+    limit_right  = used_rect.end.x * tile_size.x
+    limit_bottom = used_rect.end.y * tile_size.y
+```
+
+Salva con **Ctrl+S**.
+
+### Prova
+
+Premi **▶**. Muoviti fino ai bordi della mappa: la camera ora **si ferma** e non mostra più il vuoto grigio. Se torni al centro, la camera riprende a seguirti normalmente.
+
+<!-- 📸 SCREENSHOT: gioco in esecuzione con il player vicino al bordo sinistro — la camera si ferma e non mostra il vuoto -->
 
 ---
 
-## 4. Istanzia il Player nella scena principale
+## 4. Il player davanti a tutto
 
-Per mettere il player nel livello:
+Se provi a camminare nel gioco, potresti notare che il player finisce **dietro** ad alcune tile decorative del primo piano (il layer `foreground`). In un platform game, di solito vogliamo che il personaggio sia visibile sopra tutto il resto del livello.
+
+### Come fare
 
 1. Apri `game.tscn`
-2. Clicca sul bottone **Link** (istanzia scena figlia) nel pannello Scene
-3. Seleziona `player.tscn`
+2. Nel pannello **Scene**, seleziona il nodo `player`
+3. Nell'**Inspector**, cerca la proprietà **Z Index** (nella sezione **CanvasItem → Ordering**)
+4. Cambia il valore da `0` a `1`
 
-<!-- SCREENSHOT: scena game.tscn con il player istanziato, visibile nel viewport sul livello -->
+<!-- 📸 SCREENSHOT: Inspector del nodo player in game.tscn con Z Index impostato a 1, nella sezione CanvasItem → Ordering -->
 
-Premi **▶** per provare. Il player dovrebbe muoversi e saltare!
+> [!IMPORTANT]
+> **Cos'è lo Z Index?** In un gioco 2D, gli oggetti vengono disegnati nell'ordine in cui appaiono nell'albero della scena: prima lo sfondo, poi le piattaforme, poi il player, poi il primo piano. Ma a volte quest'ordine non basta. Lo Z Index è un numero che dice "disegnami più avanti" (valori alti) o "più indietro" (valori bassi). Con Z Index = 1, il player viene disegnato **dopo** (= sopra) i nodi con Z Index = 0 (il default).
 
 ---
 
-## Concetti Godot introdotti
+*Fin qui abbiamo: un player con velocità giusta, una camera che lo segue senza mostrare il vuoto, e il player che appare davanti a tutto. Nella prossima sezione costruiamo le piattaforme mobili.*
 
-- **Scene e nodi**: ogni scena è un albero di nodi; ogni nodo ha uno scopo preciso
-- **Istanze**: il player è una scena separata "incollata" dentro `game.tscn`
-- **CharacterBody2D**: corpo fisico per personaggi controllati da codice
-- **TileMapLayer**: sistema per costruire livelli con tile ripetute
-- **SpriteFrames**: raccolta di frame per le animazioni
-- **AtlasTexture**: ritaglio di una singola immagine da uno spritesheet
+---
+
+## 5. La piattaforma mobile — creare la scena
+
+Adesso il livello ha solo piattaforme fisse (le tile). Vogliamo aggiungere una **piattaforma che si muove** — il classico elemento dei platform game dove devi cronometrare il salto per salirci sopra.
+
+La piattaforma sarà una **scena separata**, come il player. Così potremo riutilizzarla: metterne una, due, dieci nel livello, senza rifare tutto ogni volta.
+
+### Crea la scena
+
+1. Nel menu in alto, clicca **Scene** → **New Scene**
+2. Nel pannello **Scene** clicca **Other Node** (non scegliere i nodi suggeriti)
+3. Cerca `AnimatableBody2D` e clicca **Create**
+
+<!-- 📸 SCREENSHOT: finestra "Create New Node" con "AnimatableBody2D" nella barra di ricerca -->
+
+> [!IMPORTANT]
+> **Perché AnimatableBody2D e non StaticBody2D?** Entrambi sono corpi "solidi" su cui il player può camminare. La differenza è: quando un `StaticBody2D` si muove, il player **non viene trascinato** — resta fermo mentre la piattaforma gli scivola sotto i piedi. `AnimatableBody2D` invece **trascina il player con sé**. Per una piattaforma mobile è esattamente quello che vogliamo.
+
+### Aggiungi lo sprite
+
+1. Fai **click destro** su `AnimatableBody2D` → **Add Child Node...**
+2. Cerca `Sprite2D` e clicca **Create**
+3. Seleziona il nodo `Sprite2D`. Nell'**Inspector**, trascina il file `assets/sprites/platforms.png` dal FileSystem alla proprietà **Texture**
+
+<!-- 📸 SCREENSHOT: Inspector dello Sprite2D con la texture platforms.png assegnata -->
+
+4. L'immagine `platforms.png` contiene più piattaforme diverse. Dobbiamo ritagliare solo quella che ci interessa:
+   - Nell'Inspector, attiva **Region → Enabled** (metti la spunta)
+   - In **Region → Rect**, imposta: `x = 16`, `y = 0`, `w = 32`, `h = 9`
+
+<!-- 📸 SCREENSHOT: Inspector dello Sprite2D con Region Enabled spuntato e i valori Rect impostati (16, 0, 32, 9) -->
+
+> [!NOTE]
+> La proprietà Region dice a Godot: "non mostrare tutta l'immagine, mostra solo questo rettangolo". È lo stesso principio delle animazioni dello spritesheet del player — da un'immagine grande, ritagliamo la parte che ci serve.
+
+### Aggiungi la forma di collisione
+
+1. Fai **click destro** su `AnimatableBody2D` → **Add Child Node...**
+2. Cerca `CollisionShape2D` e clicca **Create**
+3. Seleziona `CollisionShape2D`. Nell'**Inspector**, nella proprietà **Shape**, clicca `<empty>` e scegli **New RectangleShape2D**
+4. Espandi **Shape** e imposta **Size**: `x = 32`, `y = 8`
+
+<!-- 📸 SCREENSHOT: Inspector del CollisionShape2D con RectangleShape2D e size 32×8 -->
+
+5. **Attiva One Way Collision**: nell'Inspector del `CollisionShape2D`, cerca **One Way Collision** e metti la spunta
+
+<!-- 📸 SCREENSHOT: Inspector del CollisionShape2D con One Way Collision abilitato -->
+
+> [!IMPORTANT]
+> **Cosa fa One Way Collision?** Normalmente, una collisione blocca il player da **tutti i lati** — non può passarci né da sopra, né da sotto, né dai lati. Con One Way Collision, la collisione funziona **solo da un lato** (dall'alto). Questo significa che il player può **saltare dal basso** e attraversare la piattaforma, ma una volta sopra ci **cammina** normalmente. È il comportamento classico delle piattaforme nei giochi.
+
+### L'albero della scena
+
+A questo punto dovresti avere:
+
+```
+AnimatableBody2D
+├── Sprite2D
+└── CollisionShape2D
+```
+
+### Salva la scena
+
+Premi **Ctrl+S** e salva come `res://scenes/moving_platform.tscn`.
+
+---
+
+## 6. Mettere le piattaforme nel livello
+
+Ora che la scena della piattaforma esiste, dobbiamo **istanziarla** dentro la scena principale del gioco — esattamente come il player è già istanziato in `game.tscn`.
+
+### La prima piattaforma (statica)
+
+1. Apri `game.tscn`
+2. Seleziona il nodo radice `Game` nel pannello Scene
+3. Clicca l'icona **🔗** (Link / Instantiate Child Scene) in alto nel pannello Scene — è il bottone con la catena
+
+<!-- 📸 SCREENSHOT: pannello Scene con il nodo Game selezionato e il bottone "Instantiate Child Scene" (icona catena) evidenziato -->
+
+4. Seleziona `scenes/moving_platform.tscn` e clicca **Open**
+
+La piattaforma appare nel viewport. **Spostala** dove vuoi nel livello trascinandola col mouse, o imposta la posizione nell'Inspector (es. `x = 201`, `y = 174`).
+
+<!-- 📸 SCREENSHOT: game.tscn nel viewport con la piattaforma posizionata nel livello -->
+
+### La seconda piattaforma (quella che si muoverà)
+
+Ripeti gli stessi passaggi per aggiungere una **seconda** piattaforma:
+
+1. Seleziona `Game` → icona **🔗** → seleziona `moving_platform.tscn` → **Open**
+2. Posizionala in un punto diverso del livello (es. `x = 391`, `y = 147`)
+3. Nel pannello Scene, rinomina questa seconda istanza in `h_moving_platform` (click destro → **Rename**, oppure seleziona e premi `F2`)
+
+<!-- 📸 SCREENSHOT: pannello Scene di game.tscn con le due piattaforme istanziate visibili, quella rinominata "h_moving_platform" -->
+
+> [!TIP]
+> Perché rinominarla? Perché tra poco ne animeremo solo una. Avere nomi diversi aiuta a capire quale è quale nel pannello Scene. La "h" sta per "horizontal" — si muoverà in orizzontale.
+
+### Prova
+
+Premi **▶**. Le due piattaforme sono nel livello e puoi saltarci sopra! Prova anche a saltarci **da sotto**: dovresti passarci attraverso grazie alla one-way collision. Per ora stanno ferme — le animiamo nel prossimo passo.
+
+---
+
+## 7. Animare la piattaforma con l'AnimationPlayer
+
+Vogliamo che `h_moving_platform` si muova avanti e indietro in orizzontale. Per farlo usiamo l'**AnimationPlayer** — un nodo di Godot che può animare **qualsiasi proprietà** di qualsiasi nodo nel tempo (posizione, colore, trasparenza, scala...).
+
+### Aggiungi l'AnimationPlayer
+
+1. In `game.tscn`, seleziona il nodo `h_moving_platform` nel pannello Scene
+2. Fai **click destro** → **Add Child Node...**
+3. Cerca `AnimationPlayer` e clicca **Create**
+
+<!-- 📸 SCREENSHOT: pannello Scene con AnimationPlayer come figlio di h_moving_platform -->
+
+> [!IMPORTANT]
+> **Perché l'AnimationPlayer è figlio della piattaforma e non di Game?** Perché l'animazione riguarda la piattaforma. In Godot è buona pratica tenere ogni cosa vicino a ciò che controlla. Se domani cancelli la piattaforma, l'animazione se ne va insieme a lei — non restano pezzi orfani in giro.
+
+### Crea l'animazione
+
+1. Seleziona il nodo `AnimationPlayer` che hai appena aggiunto
+2. In basso si apre il **pannello Animation**. Clicca su **Animation** (il menu a tendina) → **New...**
+
+<!-- 📸 SCREENSHOT: pannello Animation in basso con il bottone "Animation → New" evidenziato -->
+
+3. Scrivi il nome `moving` e clicca **OK**
+4. L'animazione è stata creata. Ora devi impostare due cose:
+   - **Durata**: in alto a destra nel pannello Animation, cambia il numero da `1` a `3` (l'animazione durerà 3 secondi)
+   - **Loop**: clicca l'icona del **loop** 🔁 (il bottone con la freccia circolare) — così l'animazione si ripete all'infinito
+
+<!-- 📸 SCREENSHOT: pannello Animation con la durata impostata a 3 e il bottone loop attivato -->
+
+### Aggiungi la traccia di posizione
+
+Ora diciamo all'AnimationPlayer **cosa** animare: la posizione della piattaforma.
+
+1. Assicurati che nel pannello Scene sia selezionato il nodo `h_moving_platform` (il **genitore** dell'AnimationPlayer, non l'AnimationPlayer stesso)
+2. Nell'**Inspector**, trova la proprietà **Position** (dentro la sezione **Node2D → Transform**)
+3. Clicca sull'icona della **chiave** 🔑 accanto a Position
+
+<!-- 📸 SCREENSHOT: Inspector di h_moving_platform con la proprietà Position e l'icona chiave evidenziata -->
+
+4. Godot chiede se vuoi creare una nuova traccia — clicca **Create**
+5. Nella timeline in basso appare un **rombo** (un keyframe) al secondo 0 — è la posizione iniziale della piattaforma
+
+### Aggiungi il keyframe finale
+
+1. Nella timeline in basso, **sposta la testina blu** (la linea verticale blu) alla fine: trascinala fino al secondo `3`
+
+<!-- 📸 SCREENSHOT: pannello Animation con la testina blu spostata al secondo 3 -->
+
+2. Nel **viewport**, seleziona `h_moving_platform` e **spostala** nella posizione dove vuoi che arrivi alla fine dell'animazione (es. spostandola di circa 55 pixel a destra, posizione `x = 446`, `y = 147`)
+3. Clicca di nuovo sull'icona **chiave** 🔑 accanto a Position nell'Inspector
+4. Un nuovo keyframe appare al secondo 3
+
+Ora hai due keyframe: uno all'inizio (posizione di partenza) e uno alla fine (posizione di arrivo). L'AnimationPlayer interpola automaticamente tra i due — la piattaforma si muoverà da un punto all'altro in 3 secondi, poi ripartirà dall'inizio (grazie al loop).
+
+<!-- 📸 SCREENSHOT: pannello Animation con i due keyframe visibili sulla traccia position, uno a 0s e uno a 3s -->
+
+### Imposta l'autoplay
+
+Vogliamo che l'animazione parta da sola quando il gioco inizia:
+
+1. Seleziona il nodo `AnimationPlayer`
+2. Nel pannello Animation in basso, clicca sull'icona **Autoplay on Load** (il bottone con il triangolo ▶ e la "A") accanto al nome dell'animazione `moving`
+
+<!-- 📸 SCREENSHOT: pannello Animation con il bottone Autoplay evidenziato accanto all'animazione "moving" -->
+
+### Prova
+
+Premi **▶**. La piattaforma `h_moving_platform` dovrebbe muoversi avanti e indietro! Prova a saltarci sopra: il player viene **trascinato** insieme alla piattaforma.
+
+Se il player non viene trascinato, controlla di aver usato `AnimatableBody2D` e non `StaticBody2D` come root della scena `moving_platform.tscn`.
+
+---
+
+## Cosa abbiamo ottenuto
+
+Riassumiamo quello che abbiamo costruito in questa lezione:
+
+- ✅ Il player si muove a una **velocità controllata** (SPEED = 100, JUMP = -270)
+- ✅ La **Camera2D** segue il player con smoothing e non mostra il vuoto ai bordi
+- ✅ Il player appare **davanti** a tutti gli elementi decorativi (Z Index)
+- ✅ Abbiamo una **piattaforma mobile** che si muove avanti e indietro
+- ✅ Il player viene **trascinato** dalla piattaforma quando ci sta sopra
+- ✅ Si può saltare **dal basso** attraverso la piattaforma (one-way collision)
+
+<!-- 📸 SCREENSHOT: il gioco in esecuzione con il risultato finale della lezione — player su una piattaforma mobile, camera centrata -->
+
+---
+
+## Prova tu 🎮
+
+Ecco alcune cose che puoi provare a fare da solo:
+
+1. **Cambia la velocità della piattaforma**: apri l'animazione `moving` e cambia la durata da 3 a 5 secondi. Come cambia il feeling?
+
+2. **Aggiungi un'altra piattaforma**: istanzia un'altra `moving_platform.tscn` in `game.tscn` e posizionala in un punto diverso del livello. Questa volta prova a farla muovere **in verticale** invece che in orizzontale.
+
+3. **Sperimenta con la velocità del player**: cosa succede se metti `SPEED = 50`? E `JUMP_VELOCITY = -350`? Gioca con i numeri e trova i valori che ti piacciono di più.
+
+---
+
+## Prossima lezione
+
+Il gioco inizia a funzionare: ci si muove, si salta, la camera segue l'azione e ci sono piattaforme mobili. Ma per ora non c'è niente di **pericoloso** e niente da **raccogliere** — non c'è motivo di giocare.
+
+Nella prossima lezione aggiungeremo i **nemici** che ti eliminano, le **monete** da raccogliere e le **killzone** (zone di morte, tipo cadere nel vuoto). Il gioco inizierà ad avere un obiettivo.
