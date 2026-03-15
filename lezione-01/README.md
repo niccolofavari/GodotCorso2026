@@ -90,7 +90,8 @@ Il progetto che hai aperto non è completamente vuoto. Abbiamo già preparato al
 - ✅ Una **scena principale** (`game.tscn`) è già creata, ma è vuota
 
 > [!IMPORTANT]
-> **Perché queste cose sono già fatte?** Normalmente, quando si crea un gioco da zero, si configurano tutte queste impostazioni a mano. Le abbiamo preparate prima per non perdere tempo in classe con i dettagli tecnici e passare subito alla parte creativa. Se vuoi capire cosa fanno, le spieghiamo nell'appendice:
+> **Perché queste cose sono già fatte?** Normalmente, quando si crea un gioco da zero, si configurano tutte queste impostazioni a mano. Le abbiamo preparate prima per non perdere tempo in classe con i dettagli tecnici e passare subito alla parte creativa. Se vuoi capire cosa fanno o vuoi rifare tutto da solo, le spieghiamo nell'appendice:
+> - → [Creare il progetto da zero (tutti i passaggi)](../appendice/progetto-da-zero.md)
 > - → [Cos'è la risoluzione e il viewport?](../appendice/risoluzione.md)
 > - → [Cosa sono i layer di collisione?](../appendice/layer-di-collisione.md)
 > - → [Cosa sono gli asset?](../appendice/asset.md)
