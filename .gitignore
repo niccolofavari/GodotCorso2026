@@ -1,6 +1,9 @@
 # Godot 4+ cache (generata automaticamente, inutile in repo)
 .godot/
 
+# Note private dell'insegnante
+NOTE.md
+
 # Android export
 /android/
 
