@@ -24,3 +24,9 @@ Ogni cartella contiene il progetto Godot completo della lezione + la documentazi
 3. Scarica il progetto e aprilo con Godot 4
 
 > Puoi scaricare l'intera repo come ZIP dal bottone **Code → Download ZIP** in alto a destra.
+
+---
+
+## Risorse utili
+
+Strumenti, asset gratuiti, musica, suoni e materiali per imparare: → [RISORSE.md](RISORSE.md)
