@@ -11,9 +11,9 @@ Ogni cartella contiene il progetto Godot completo della lezione + la documentazi
 | Lezione | Argomenti |
 |---|---|
 | [Lezione 00](lezione-00/README.md) | Setup del progetto e degli asset |
-| [Lezione 01](lezione-01/README.md) | ... |
-| [Lezione 02](lezione-02/README.md) | ... |
-| [Lezione 03](lezione-03/README.md) | ... |
+| [Lezione 01](lezione-01/README.md) | Scena principale, Player, TileMap, movimento |
+| [Lezione 02](lezione-02/README.md) | Camera2D, piattaforme mobili, organizzazione script |
+| [Lezione 03](lezione-03/README.md) | Nemici, monete, killzone, Area2D, Physics Layers |
 
 ---
 
