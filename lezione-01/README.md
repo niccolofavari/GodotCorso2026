@@ -1,87 +1,93 @@
-# Lezione 01 – Scena, Player e TileMap
+# Lezione 01 – Installiamo Godot e apriamo il progetto
 
-In questa lezione partiamo da zero e costruiamo la struttura base del gioco: la scena principale, il personaggio giocabile e il livello fatto con le tile.
-
----
-
-## Cosa abbiamo fatto
-
-- Creato la **scena principale** (`game.tscn`) con tre layer di TileMap
-- Creato la **scena Player** (`player.tscn`) con sprite animato e collisione
-- Scritto il primo script di movimento del player
-- Importato e configurato il **TileSet**
+Prima di iniziare a fare il gioco, dobbiamo installare il programma e aprire il progetto base da cui partiremo.
 
 ---
 
-## La scena principale
+## 1. Scarica Godot
 
-La scena `Game` è un `Node2D` con tre `TileMapLayer` figli:
+Vai su **[godotengine.org](https://godotengine.org/)** e clicca su **Download**.
 
-| Layer | Scopo |
+Scarica **Godot Engine 4** — la versione normale, non quella ".NET".
+
+> [!NOTE]
+> Godot non richiede installazione: è un singolo file che si apre e basta. Puoi anche tenerlo sul desktop o su una chiavetta USB.
+
+---
+
+## 2. Scarica i file del corso
+
+Vai su **[github.com/niccolofavari/GodotCorso2026](https://github.com/niccolofavari/GodotCorso2026)**, clicca sul bottone verde **Code** e poi **Download ZIP**.
+
+Decomprimi lo ZIP e tieni la cartella in un posto che ricordi facilmente (es. il Desktop).
+
+---
+
+## 3. Apri il progetto in Godot
+
+1. Avvia Godot — si aprirà il **Project Manager** (la schermata iniziale con la lista dei progetti)
+2. Clicca su **Import**
+3. Naviga fino alla cartella `lezione-00`
+4. Seleziona il file `project.godot`
+5. Clicca **Import & Edit**
+
+![Il Project Manager di Godot con il bottone Import evidenziato](screenshots/01-bottone-import.png)
+
+Il progetto si apre e vedrai l'editor di Godot.
+
+---
+
+## 4. Orientati nell'interfaccia
+
+L'editor di Godot è diviso in alcune aree principali:
+
+![L'interfaccia di Godot con le aree numerate](screenshots/02-tour-interfaccia.png)
+
+| # | Area | Dove si trova | A cosa serve |
+|---|---|---|---|
+| 1 | **FileSystem** | In basso a sinistra | Tutti i file del progetto (immagini, suoni, script...) |
+| 2 | **Scene** | In alto a sinistra | L'albero dei nodi della scena aperta |
+| 3 | **Viewport** | Al centro | Quello che vedi nel gioco |
+| 4 | **Inspector** | A destra | Le proprietà del nodo selezionato |
+| 5 | **Output** | In basso | Messaggi ed errori mentre il gioco gira |
+
+Non preoccuparti di capire tutto adesso — lo scopriremo insieme durante le lezioni.
+
+---
+
+## 5. Cosa c'è già nel progetto
+
+Abbiamo già preparato alcune cose per te, così non perdiamo tempo in classe a configurare i dettagli tecnici:
+
+- ✅ La **risoluzione** della finestra è già quella giusta per il nostro gioco in pixel art
+- ✅ Le **immagini**, i **font** e i **suoni** sono già importati nella cartella `assets/`
+- ✅ I **layer di collisione** sono già nominati
+
+> [!TIP]
+> Vuoi capire cosa significa ognuna di queste cose? Le spieghiamo qui:
+> - → [Cos'è la risoluzione e il viewport?](../appendice/risoluzione.md)
+> - → [Cosa sono i layer di collisione?](../appendice/layer-di-collisione.md)
+> - → [Cosa sono gli asset?](../appendice/asset.md)
+
+---
+
+## 6. Premi Play ▶
+
+Premi il bottone **▶** in alto al centro (o `F5`) per avviare il gioco.
+
+Si aprirà una finestra grigia — è normale, non abbiamo ancora aggiunto nulla! Chiudila pure.
+
+<!-- SCREENSHOT: finestra di gioco vuota/grigia che appare dopo aver premuto Play -->
+
+---
+
+## Gli asset inclusi
+
+Nella cartella `assets/` trovi tutto il materiale grafico e sonoro che useremo durante il corso:
+
+| Cartella | Contenuto |
 |---|---|
-| `background` | Sfondo decorativo (non solido) |
-| `platforms` | Piattaforme su cui il player cammina (con collisione) |
-| `foreground` | Elementi davanti al player (decorativi) |
-
-Tutti e tre usano lo stesso TileSet (`world_tileset_resource.tres`).
-
----
-
-## Il Player
-
-Il player è un `CharacterBody2D` con:
-- `AnimatedSprite2D` → animazione idle con 4 frame dal spritesheet `knight.png`
-- `CollisionShape2D` → forma circolare (radius 5px) centrata sui piedi
-
-### Script di movimento (`player.gd`)
-
-```gdscript
-extends CharacterBody2D
-
-const SPEED = 300.0
-const JUMP_VELOCITY = -400.0
-
-func _physics_process(delta: float) -> void:
-    # Gravità
-    if not is_on_floor():
-        velocity += get_gravity() * delta
-
-    # Salto
-    if Input.is_action_just_pressed("ui_accept") and is_on_floor():
-        velocity.y = JUMP_VELOCITY
-
-    # Movimento orizzontale
-    var direction := Input.get_axis("ui_left", "ui_right")
-    if direction:
-        velocity.x = direction * SPEED
-    else:
-        velocity.x = move_toward(velocity.x, 0, SPEED)
-
-    move_and_slide()
-```
-
-**Concetti chiave:**
-- `_physics_process(delta)` → viene chiamato ogni frame fisico (60fps di default)
-- `get_gravity()` → legge la gravità dai Project Settings
-- `move_and_slide()` → muove il corpo gestendo automaticamente le collisioni
-- `is_on_floor()` → true se il player è appoggiato su una superficie
-- `move_toward(x, 0, SPEED)` → decelera gradualmente fino a fermarsi
-
-### Controlli
-
-| Tasto | Azione |
-|---|---|
-| ← → (frecce) | Movimento orizzontale |
-| Spazio / Enter | Salto |
-| Esc | Esci dal gioco |
-
----
-
-## Concetti Godot introdotti
-
-- **Scene e nodi**: ogni scena è un albero di nodi
-- **Istanze**: il player è una scena separata istanziata dentro `game.tscn`
-- **CharacterBody2D**: corpo fisico pensato per i personaggi controllati dal codice
-- **TileMapLayer**: sistema per disegnare livelli con tile ripetute
-- **AtlasTexture**: ritaglio di una porzione da uno spritesheet
-- **SpriteFrames**: raccolta di frame per le animazioni
+| `sprites/` | Le immagini per il personaggio, i nemici, le monete, il livello |
+| `fonts/` | Font in stile pixel art |
+| `sounds/` | Effetti sonori (salto, moneta, esplosione...) |
+| `music/` | Musica di sottofondo |

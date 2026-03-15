@@ -2,7 +2,6 @@
 
 [ext_resource type="Texture2D" uid="uid://d1l5pbrehmmu1" path="res://assets/sprites/knight.png" id="1_3vyb7"]
 [ext_resource type="Script" uid="uid://b3axo6scyyxxr" path="res://scripts/player.gd" id="1_g2els"]
-[ext_resource type="Script" uid="uid://dydfsl32xb4nh" path="res://scripts/camera_2d.gd" id="3_qhqgy"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_g2els"]
 atlas = ExtResource("1_3vyb7")
@@ -40,7 +39,7 @@ animations = [{
 "speed": 8.0
 }]
 
-[sub_resource type="CircleShape2D" id="CircleShape2D_g2els"]
+[sub_resource type="CircleShape2D" id="CircleShape2D_3vyb7"]
 radius = 5.0
 
 [node name="CharacterBody2D" type="CharacterBody2D" unique_id=1243357262]
@@ -55,8 +54,4 @@ offset = Vector2(0, -12)
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=320203768]
 position = Vector2(0, -5)
-shape = SubResource("CircleShape2D_g2els")
-
-[node name="Camera2D" type="Camera2D" parent="." unique_id=1522346672]
-position_smoothing_enabled = true
-script = ExtResource("3_qhqgy")
+shape = SubResource("CircleShape2D_3vyb7")

@@ -13,15 +13,13 @@ config_version=5
 config/name="Lezione-03"
 run/main_scene="uid://dr3uouvv5aiu3"
 config/features=PackedStringArray("4.6", "Forward Plus")
-run/max_fps=120
 config/icon="res://icon.svg"
 
 [display]
 
 window/size/viewport_width=432
 window/size/viewport_height=240
-window/size/window_width_override=1296
-window/size/window_height_override=720
+window/size/mode=2
 window/stretch/mode="viewport"
 
 [layer_names]

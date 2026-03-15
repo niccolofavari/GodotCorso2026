@@ -1,100 +1,164 @@
-# Lezione 02 – Camera, Piattaforme Mobili e Organizzazione del Progetto
+# Lezione 02 – Scena, Player e TileMap
 
-In questa lezione aggiungiamo la camera che segue il player, le piattaforme mobili e riorganizziamo gli script in una cartella dedicata.
-
----
-
-## Cosa abbiamo fatto
-
-- Aggiunta una **Camera2D** che segue il player con limiti legati alla TileMap
-- Creata la **piattaforma mobile** (`moving_platform.tscn`)
-- Riorganizzati gli script nella cartella `scripts/`
-- Ridotto la velocità del player per adattarla alla nuova risoluzione
+In questa lezione partiamo da zero e costruiamo la struttura base del gioco: la scena principale, il personaggio giocabile e il livello fatto con le tile.
 
 ---
 
-## La Camera2D
+## Cosa costruiamo oggi
 
-La camera è figlia del `CharacterBody2D` del player, così lo segue automaticamente. Ha il **position smoothing** abilitato per un movimento fluido.
+- La **scena principale** (`game.tscn`) — il contenitore di tutto il gioco
+- La **scena Player** (`player.tscn`) — il personaggio che controlliamo
+- Il **TileMap** — il livello disegnato con le tile
+- Il primo script di **movimento**
 
-I limiti della camera vengono calcolati automaticamente in base alla dimensione della TileMap:
+<!-- SCREENSHOT: risultato finale della lezione — player che cammina sul livello -->
+
+---
+
+## 1. La scena principale
+
+In Godot, ogni gioco è fatto di **scene**. Una scena è un albero di **nodi**, ognuno con uno scopo preciso.
+
+<!-- SCREENSHOT: albero della scena Game con i tre TileMapLayer visibili nel pannello Scene -->
+
+Crea una nuova scena con un nodo radice **Node2D** e salvala come `game.tscn` nella cartella `scenes/`.
+
+Dentro `Game` aggiungi tre nodi **TileMapLayer**, uno per ogni piano del livello:
+
+| Layer | Scopo |
+|---|---|
+| `TileMapLayer background` | Sfondo decorativo (non solido) |
+| `TileMapLayer platforms` | Piattaforme su cui il player cammina (con collisione) |
+| `TileMapLayer foreground` | Elementi davanti al player (decorativi) |
+
+Tutti e tre usano lo stesso TileSet (`world_tileset_resource.tres`), che trovi già pronto in `assets/sprites/`.
+
+> [!TIP]
+> → [Cosa sono gli asset e come Godot li importa?](../appendice/asset.md)
+
+---
+
+## 2. Il Player
+
+Il player è una scena separata (`player.tscn`). Separare il player dalla scena principale ci permette di riutilizzarlo facilmente in livelli diversi.
+
+La struttura della scena è:
+
+```
+CharacterBody2D        ← root: gestisce la fisica
+├── AnimatedSprite2D   ← l'immagine animata del personaggio
+└── CollisionShape2D   ← la forma usata per le collisioni
+```
+
+### CharacterBody2D
+
+È il tipo di nodo pensato per i personaggi controllati dal codice. Gestisce automaticamente la gravità, il pavimento e le collisioni con l'ambiente.
+
+> [!NOTE]
+> → [Approfondimento sui tipi di corpo fisico](../appendice/layer-di-collisione.md)
+
+### AnimatedSprite2D
+
+Mostra l'animazione del personaggio. Usa un **SpriteFrames** — una raccolta di frame ritagliati dallo spritesheet `knight.png`.
+
+<!-- SCREENSHOT: pannello SpriteFrames con l'animazione idle aperta e i 4 frame visibili -->
+
+Per creare l'animazione `idle`:
+1. Seleziona `AnimatedSprite2D` → Inspector → **Sprite Frames** → **New SpriteFrames**
+2. In basso si apre il pannello SpriteFrames — rinomina l'animazione `default` in `idle`
+3. Clicca sul bottone **Add Frames from Sprite Sheet** (l'icona con la griglia)
+4. Seleziona `assets/sprites/knight.png`, imposta griglia **8×8**, frame size **32×32**
+5. Seleziona i 4 frame della riga `IDLE` e clicca **Add 4 Frame(s)**
+
+<!-- SCREENSHOT: dialog "Select Frames" con i 4 frame IDLE selezionati -->
+
+Imposta **Autoplay** su `idle` così l'animazione parte subito.
+
+### CollisionShape2D
+
+Definisce la forma fisica del player — quella che "tocca" davvero il mondo.
+
+Usa una **CircleShape2D** con raggio 5px, centrata ai piedi del personaggio (`position Y = -5`).
+
+<!-- SCREENSHOT: player nel viewport con la forma di collisione cerchio visibile in verde -->
+
+---
+
+## 3. Script di movimento
+
+Seleziona il nodo `CharacterBody2D` e aggiungi uno script. Scegli il template **CharacterBody2D: Basic Movement** — Godot genera già lo scheletro giusto per un platform game.
+
+<!-- SCREENSHOT: dialog "Attach Node Script" con il template Basic Movement selezionato -->
+
+Salva lo script in `scripts/player.gd`. Il codice finale:
 
 ```gdscript
-extends Camera2D
+extends CharacterBody2D
 
-func _ready() -> void:
-    var tilemap = get_tree().get_first_node_in_group("limits")
+const SPEED = 100.0
+const JUMP_VELOCITY = -270.0
 
-    var used_rect = tilemap.get_used_rect()
-    var tile_size = tilemap.tile_set.tile_size
+func _physics_process(delta: float) -> void:
+    # Gravità: se siamo in aria, acceleriamo verso il basso
+    if not is_on_floor():
+        velocity += get_gravity() * delta
 
-    limit_left   = 0
-    limit_top    = 0
-    limit_right  = used_rect.end.x * tile_size.x
-    limit_bottom = used_rect.end.y * tile_size.y
+    # Salto: solo se siamo a terra
+    if Input.is_action_just_pressed("ui_accept") and is_on_floor():
+        velocity.y = JUMP_VELOCITY
+
+    # Movimento orizzontale
+    var direction := Input.get_axis("ui_left", "ui_right")
+    if direction:
+        velocity.x = direction * SPEED
+    else:
+        velocity.x = move_toward(velocity.x, 0, SPEED)
+
+    move_and_slide()
 ```
 
 **Concetti chiave:**
-- `get_first_node_in_group("limits")` → trova il TileMapLayer del background tramite gruppo
-- `get_used_rect()` → restituisce il rettangolo in coordinate tile che contiene tutte le celle
-- `used_rect.end * tile_size` → converte in pixel per impostare i limiti della camera
 
-> Il TileMapLayer del background deve essere aggiunto al **gruppo** `limits` dall'Inspector.
+| Funzione | Cosa fa |
+|---|---|
+| `_physics_process(delta)` | Viene chiamata 60 volte al secondo (ogni frame fisico) |
+| `get_gravity()` | Legge la gravità dai Project Settings |
+| `is_on_floor()` | Vale `true` se il player è appoggiato su una superficie |
+| `move_toward(x, 0, SPEED)` | Decelera gradualmente fino a fermarsi |
+| `move_and_slide()` | Muove il corpo gestendo le collisioni automaticamente |
 
----
+> [!NOTE]
+> `delta` è il tempo trascorso dall'ultimo frame in secondi. Moltiplicare per `delta` rende il movimento indipendente dalla velocità del computer.
 
-## La piattaforma mobile
+### Controlli
 
-La piattaforma è un `AnimatableBody2D` (corpo fisico che può essere mosso tramite animazione senza perdere le collisioni):
-
-- `Sprite2D` → sprite ritagliato dal tileset `platforms.png`
-- `CollisionShape2D` → rettangolo con **one-way collision** (si può passarci sopra ma non sotto)
-
-Il movimento è gestito dall'`AnimationPlayer` nella scena `game.tscn`, non dallo script.
-
-### Perché AnimatableBody2D e non StaticBody2D?
-
-`StaticBody2D` non "spinge" il player quando si muove. `AnimatableBody2D` sì: il player viene trascinato con la piattaforma correttamente.
-
----
-
-## Modifiche al Player
-
-| Proprietà | Lezione 01 | Lezione 02 |
-|---|---|---|
-| `SPEED` | 300.0 | 100.0 |
-| `JUMP_VELOCITY` | -400.0 | -270.0 |
-| Collision mask | default | 10 (layer 2 + 4: piattaforme + tile) |
-| Camera | nessuna | Camera2D con limiti |
-
-La **collision mask** del player è `10` (binario `1010`), ovvero:
-- Layer 2 → Moving Platforms
-- Layer 4 → Tiles
+| Tasto | Azione |
+|---|---|
+| ← → (frecce) | Movimento orizzontale |
+| Spazio / Enter | Salto |
+| Esc | Esci dal gioco |
 
 ---
 
-## Organizzazione del progetto
+## 4. Istanzia il Player nella scena principale
 
-Gli script sono stati spostati da `scenes/` a `scripts/` per tenere separati i file `.gd` dalle scene `.tscn`.
+Per mettere il player nel livello:
 
-```
-lezione-02/
-├── scenes/
-│   ├── game.tscn
-│   ├── moving_platform.tscn
-│   └── player.tscn
-└── scripts/
-    ├── camera_2d.gd
-    ├── game.gd
-    └── player.gd
-```
+1. Apri `game.tscn`
+2. Clicca sul bottone **Link** (istanzia scena figlia) nel pannello Scene
+3. Seleziona `player.tscn`
+
+<!-- SCREENSHOT: scena game.tscn con il player istanziato, visibile nel viewport sul livello -->
+
+Premi **▶** per provare. Il player dovrebbe muoversi e saltare!
 
 ---
 
 ## Concetti Godot introdotti
 
-- **Camera2D** con `position_smoothing` e limiti (`limit_left/right/top/bottom`)
-- **Gruppi**: modo per trovare nodi nell'albero senza riferimenti diretti
-- **AnimatableBody2D**: corpo fisico animabile che interagisce correttamente con i CharacterBody
-- **One-way collision**: collisione solo da un lato (piattaforme attraversabili)
-- **AnimationPlayer**: sistema per animare proprietà di qualsiasi nodo
+- **Scene e nodi**: ogni scena è un albero di nodi; ogni nodo ha uno scopo preciso
+- **Istanze**: il player è una scena separata "incollata" dentro `game.tscn`
+- **CharacterBody2D**: corpo fisico per personaggi controllati da codice
+- **TileMapLayer**: sistema per costruire livelli con tile ripetute
+- **SpriteFrames**: raccolta di frame per le animazioni
+- **AtlasTexture**: ritaglio di una singola immagine da uno spritesheet

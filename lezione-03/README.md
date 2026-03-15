@@ -1,126 +1,136 @@
-# Lezione 03 – Nemici, Monete, Killzone e Area2D
+# Lezione 03 – Camera, Piattaforme Mobili e Organizzazione del Progetto
 
-In questa lezione aggiungiamo i primi elementi di gameplay: un nemico che pattuglia la mappa, monete raccoglibili e una killzone che ricarica la scena.
-
----
-
-## Cosa abbiamo fatto
-
-- Creato il **nemico** (`enemy.tscn`) con movimento automatico e RayCast2D
-- Creato le **monete** (`coin.tscn`) raccoglibili tramite `Area2D`
-- Creata la **killzone** (`killzone.tscn`) che fa morire il player con effetto slow-motion
-- Introdotto il concetto di **Physics Layers** per gestire le collisioni selettive
+In questa lezione aggiungiamo la camera che segue il player, le piattaforme mobili e riorganizziamo gli script in una cartella dedicata.
 
 ---
 
-## Il Nemico
+## Cosa costruiamo oggi
 
-Il nemico è un `Node2D` (non un CharacterBody, non ha la fisica integrata) che si muove orizzontalmente a velocità costante e inverte la direzione quando sta per cadere dal bordo.
+- La **Camera2D** che segue il player con limiti legati alla mappa
+- La **piattaforma mobile** (`moving_platform.tscn`)
+- Una struttura di cartelle più ordinata per gli script
 
-### Script (`enemy.gd`)
+<!-- SCREENSHOT: gioco in esecuzione con la camera che segue il player e una piattaforma mobile visibile -->
+
+---
+
+## 1. La Camera2D
+
+La camera è figlia del `CharacterBody2D` del player — così lo segue automaticamente senza scrivere codice.
+
+<!-- SCREENSHOT: pannello Scene con Camera2D come figlia di CharacterBody2D -->
+
+Nell'Inspector, abilita **Position Smoothing** → `On`: la camera non si muove in modo secco ma segue il player con un piccolo ritardo fluido.
+
+### Limiti della camera
+
+Senza limiti, la camera mostrerebbe il vuoto oltre il bordo della mappa. Lo script calcola i limiti automaticamente in base alla dimensione del TileMapLayer:
 
 ```gdscript
-extends Node2D
+extends Camera2D
 
-@onready var ray_cast_2d_right: RayCast2D = $"RayCast2D - right"
-@onready var ray_cast_2d_left: RayCast2D = $"RayCast2D - left"
-@onready var direction = 1
+func _ready() -> void:
+    var tilemap = get_tree().get_first_node_in_group("limits")
 
-const SPEED = 35
+    var used_rect = tilemap.get_used_rect()
+    var tile_size = tilemap.tile_set.tile_size
 
-func _physics_process(delta: float) -> void:
-    position.x += SPEED * delta * direction
-
-    if ray_cast_2d_right.is_colliding() == false:
-        direction = -1
-
-    if ray_cast_2d_left.is_colliding() == false:
-        direction = 1
+    limit_left   = 0
+    limit_top    = 0
+    limit_right  = used_rect.end.x * tile_size.x
+    limit_bottom = used_rect.end.y * tile_size.y
 ```
 
-### I RayCast2D
+**Come funziona:**
 
-Il nemico ha due `RayCast2D`, uno per lato, posizionati ai piedi e puntati verso il basso:
+| Riga | Significato |
+|---|---|
+| `get_first_node_in_group("limits")` | Trova il TileMapLayer del background tramite gruppo |
+| `get_used_rect()` | Restituisce il rettangolo (in coordinate tile) che contiene tutte le celle disegnate |
+| `used_rect.end * tile_size` | Converte le coordinate tile in pixel |
 
-| RayCast | Posizione | Target |
+> [!IMPORTANT]
+> Il `TileMapLayer background` deve essere aggiunto al **gruppo** `limits` dall'Inspector (tab **Node** → **Groups**). Se dimentichi questo passaggio, lo script non trova la mappa e i limiti non funzionano.
+
+<!-- SCREENSHOT: Inspector del TileMapLayer background con il gruppo "limits" aggiunto -->
+
+---
+
+## 2. La piattaforma mobile
+
+La piattaforma è una scena separata (`moving_platform.tscn`) basata su **AnimatableBody2D**.
+
+```
+AnimatableBody2D       ← root: corpo fisico animabile
+├── Sprite2D           ← l'immagine della piattaforma
+└── CollisionShape2D   ← rettangolo con one-way collision
+```
+
+### Perché AnimatableBody2D e non StaticBody2D?
+
+`StaticBody2D` non "spinge" il player quando si muove: il player rimane fermo mentre la piattaforma gli passa sotto. `AnimatableBody2D` invece lo trascina correttamente.
+
+### One-way collision
+
+Il `CollisionShape2D` ha **One Way Collision** attivato: si può atterrare sopra la piattaforma, ma ci si può passare attraverso dal basso. Così si può saltare per salirci.
+
+<!-- SCREENSHOT: Inspector del CollisionShape2D con One Way Collision abilitato -->
+
+### Animazione del movimento
+
+Il movimento non è scritto in uno script ma gestito dall'**AnimationPlayer** nella scena `game.tscn`. L'AnimationPlayer sposta la posizione della piattaforma nel tempo creando un'animazione loopata.
+
+<!-- SCREENSHOT: pannello AnimationPlayer con la traccia position della piattaforma -->
+
+> [!TIP]
+> → [Approfondimento sull'AnimationPlayer](../appendice/layer-di-collisione.md)
+
+<!-- ??? Hai una pagina in appendice sull'AnimationPlayer? Se no rimuovo il rimando -->
+
+---
+
+## 3. Organizzazione del progetto
+
+In questa lezione spostiamo gli script da `scenes/` a una cartella dedicata `scripts/`. È una buona abitudine tenere i file `.gd` separati dalle scene `.tscn`.
+
+```
+lezione-03/
+├── scenes/
+│   ├── game.tscn
+│   ├── moving_platform.tscn
+│   └── player.tscn
+└── scripts/
+    ├── camera_2d.gd
+    ├── game.gd
+    └── player.gd
+```
+
+Quando sposti uno script, Godot aggiorna automaticamente i riferimenti nelle scene — non devi modificare nulla a mano.
+
+---
+
+## Modifiche rispetto alla Lezione 02
+
+| Cosa | Lezione 02 | Lezione 03 |
 |---|---|---|
-| `RayCast2D - right` | `(8, 0)` | `(0, 5)` verso il basso |
-| `RayCast2D - left` | `(-8, 0)` | `(0, 5)` verso il basso |
+| `SPEED` del player | 300.0 | 100.0 |
+| `JUMP_VELOCITY` | -400.0 | -270.0 |
+| Collision mask del player | default | `10` (layer 2 + 4) |
+| Camera | nessuna | Camera2D con limiti |
 
-**Logica:** se il raycast destro non colpisce nulla (bordo a destra), inverti verso sinistra. Se il sinistro non colpisce nulla, inverti verso destra.
+La **collision mask** `10` in binario è `1010`, cioè il player reagisce a:
+- Layer 2 → Moving Platforms
+- Layer 4 → Tiles
 
-> ⚠️ **Attenzione al Collision Mask!** I RayCast2D devono avere nella loro maschera di collisione lo stesso layer del TileMap (Layer 4 – Tiles). Se la mask è sbagliata, i raggi non vedono le tile e il nemico non cambia mai direzione.
-
----
-
-## La Killzone
-
-La killzone è un `Area2D` che copre l'intera parte bassa della mappa. Quando il player ci cade dentro:
-
-1. Viene rimosso il `CollisionShape2D` del player (per evitare altre collisioni)
-2. Si attiva uno **slow-motion** (`Engine.time_scale = 0.1`)
-3. Un `Timer` (ignorando il time scale) aspetta 1.5 secondi
-4. La scena viene ricaricata
-
-```gdscript
-extends Area2D
-
-@onready var timer = $Timer
-
-func _on_body_entered(body: Node2D) -> void:
-    timer.ignore_time_scale = true
-    body.get_node("CollisionShape2D").queue_free()
-    Engine.time_scale = 0.1
-    timer.start()
-
-func _on_timer_timeout() -> void:
-    Engine.time_scale = 1
-    get_tree().reload_current_scene()
-```
-
-**Concetti chiave:**
-- `Engine.time_scale` → scala la velocità di tutto il gioco (0.1 = 10% della velocità)
-- `timer.ignore_time_scale = true` → il timer non viene rallentato dallo slow-motion
-- `queue_free()` → rimuove il nodo in sicurezza a fine frame
-- `reload_current_scene()` → ricarica la scena corrente (equivale a morire e ricominciare)
-
----
-
-## Le Monete
-
-Ogni moneta è un `Area2D` con animazione. Quando un corpo fisico la tocca, si distrugge:
-
-```gdscript
-extends Area2D
-
-func _on_body_entered(body: Node2D) -> void:
-    queue_free()
-```
-
----
-
-## Physics Layers
-
-In questa lezione i layer di collisione diventano importanti. Ecco la mappa completa:
-
-| Layer | Nome | Bitmask | Chi lo usa |
-|---|---|---|---|
-| 1 | Player | `1` | CharacterBody2D del player |
-| 2 | Moving Platforms | `2` | AnimatableBody2D |
-| 3 | Pickups | `4` | Monete (Area2D) |
-| 4 | Tiles | `8` | TileMapLayer con collisioni |
-| 5 | Killzone | `16` | Killzone (Area2D) |
-
-> **Collision Layer** = "su quale layer si trova questo oggetto"  
-> **Collision Mask** = "con quali layer questo oggetto interagisce"
+> [!NOTE]
+> → [Come funzionano i layer e le mask di collisione?](../appendice/layer-di-collisione.md)
 
 ---
 
 ## Concetti Godot introdotti
 
-- **RayCast2D**: raggio che rileva collisioni in una direzione, utile per AI e detection
-- **Area2D**: zona che rileva sovrapposizioni senza avere fisica rigida
-- **Engine.time_scale**: slow-motion globale
-- **Timer con ignore_time_scale**: timer indipendente dal time scale
-- **Physics Layers e Mask**: sistema per controllare selettivamente quali oggetti collidono tra loro
-- **`@onready`**: shortcut per ottenere riferimenti ai nodi figli quando la scena è pronta
+- **Camera2D** con `position_smoothing` e limiti (`limit_left/right/top/bottom`)
+- **Gruppi**: modo per trovare nodi nell'albero senza riferimenti diretti
+- **AnimatableBody2D**: corpo fisico animabile che interagisce correttamente con i CharacterBody
+- **One-way collision**: collisione solo da un lato
+- **AnimationPlayer**: anima qualsiasi proprietà di qualsiasi nodo nel tempo
