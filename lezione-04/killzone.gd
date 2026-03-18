@@ -3,6 +3,9 @@ extends Area2D
 @onready var timer = $Timer
 
 func _on_body_entered(body: Node2D) -> void:
+	# Se il player sta rollando, è invulnerabile
+	if body.has_method("is_rolling") and body.is_rolling():
+		return
 	timer.ignore_time_scale = true
 	body.get_node("CollisionShape2D").queue_free()
 	print("Timer started!")

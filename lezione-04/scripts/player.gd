@@ -155,10 +155,6 @@ func _change_state(new_state: State) -> void:
 	if state == new_state:
 		return
 
-	# Se usciamo da ROLL, riattiviamo le collisioni normali
-	if state == State.ROLL:
-		set_collision_layer_value(1, true)
-
 	state = new_state
 
 	match state:
@@ -169,7 +165,8 @@ func _change_state(new_state: State) -> void:
 		State.JUMP:
 			anim.play("jump")
 		State.ROLL:
-			# Durante la capriola il player è invulnerabile:
-			# lo togliamo dal layer 1 così le killzone non lo rilevano
-			set_collision_layer_value(1, false)
 			anim.play("roll")
+
+
+func is_rolling() -> bool:
+	return state == State.ROLL
