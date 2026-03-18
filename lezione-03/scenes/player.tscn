@@ -240,7 +240,7 @@ animations = [{
 }],
 "loop": true,
 "name": &"roll",
-"speed": 11.0
+"speed": 21.0
 }, {
 "frames": [{
 "duration": 1.0,
@@ -304,9 +304,9 @@ script = ExtResource("1_g2els")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=729464780]
 sprite_frames = SubResource("SpriteFrames_tuyoq")
-animation = &"run"
+animation = &"roll"
 autoplay = "idle"
-frame_progress = 0.10014709
+frame_progress = 0.3999817
 offset = Vector2(0, -12)
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=320203768]
@@ -314,5 +314,4 @@ position = Vector2(0, -5)
 shape = SubResource("CircleShape2D_g2els")
 
 [node name="Camera2D" type="Camera2D" parent="." unique_id=1522346672]
-position_smoothing_enabled = true
 script = ExtResource("3_qhqgy")
