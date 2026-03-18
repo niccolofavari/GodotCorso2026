@@ -32,7 +32,7 @@ In questa lezione risolviamo tutti e tre questi problemi.
 - 📷 **Aggiungiamo la Camera2D** — segue il player e non mostra il vuoto fuori dalla mappa
 - 🟫 **Creiamo una piattaforma mobile** — una nuova scena con un corpo fisico che si muove
 - 🎬 **Animiamo la piattaforma** — usiamo l'AnimationPlayer per farla muovere avanti e indietro
-- 🗂️ Qualche ritocco: l'ordine di disegno del player e piccole modifiche al livello
+- 🗂️ **Mettiamo ordine** — riorganizziamo l'albero della scena con nodi contenitore
 
 ---
 
@@ -99,7 +99,7 @@ CharacterBody2D
 
 3. Fai **click destro** su `CharacterBody2D` (il nodo radice) → **Add Child Node...**
 
-<!-- 📸 SCREENSHOT: click destro su CharacterBody2D con il menu contextuale aperto, "Add Child Node" evidenziato -->
+<!-- 📸 SCREENSHOT: click destro su CharacterBody2D con il menu contestuale aperto, "Add Child Node" evidenziato -->
 
 4. Si apre una finestra di ricerca. Scrivi `Camera2D` nella barra di ricerca in alto
 5. Seleziona **Camera2D** e clicca **Create**
@@ -114,15 +114,6 @@ CharacterBody2D
 ├── CollisionShape2D
 └── Camera2D            ← nuova!
 ```
-
-### Attiva il Position Smoothing
-
-Seleziona il nodo `Camera2D` che hai appena aggiunto. Nel pannello **Inspector** a destra, cerca la sezione **Position Smoothing** e metti la spunta su **Enabled**.
-
-<!-- 📸 SCREENSHOT: Inspector della Camera2D con Position Smoothing → Enabled spuntato -->
-
-> [!TIP]
-> **Cosa fa il Position Smoothing?** Senza smoothing, la camera è incollata al player: segue ogni suo movimento in modo secco e istantaneo. Con lo smoothing, la camera "rincorre" il player con un leggero ritardo fluido. Prova ad accenderlo e spegnerlo: vedrai la differenza immediatamente.
 
 ### Prova
 
@@ -189,7 +180,7 @@ func _ready() -> void:
 > **Cosa significa?**
 > - `func _ready()` — è una funzione speciale di Godot. Viene eseguita **una sola volta**, nel momento in cui il nodo appare nel gioco. Perfetto per configurare cose all'inizio.
 > - `var tilemap` — crea una **variabile** (un contenitore con un nome). La chiamiamo `tilemap` perché conterrà il riferimento al nostro TileMap.
-> - `get_tree().get_first_node_in_group("limits")` — cerca nell'intera scena il primo nodo che ha il gruppo `limits`. È il `TileMapLayer platforms` a cui abbiamo aggiunto il gruppo prima.
+> - `get_tree().get_first_node_in_group("limits")` — cerca nell'intera scena il primo nodo che ha il gruppo `limits`. È il TileMapLayer delle piattaforme a cui abbiamo aggiunto il gruppo prima.
 
 7. Aggiungi le righe successive che leggono la dimensione della mappa:
 
@@ -199,7 +190,7 @@ func _ready() -> void:
 ```
 
 > [!NOTE]
-> - `get_used_rect()` restituisce il **rettangolo** che contiene tutte le tile che hai disegnato. Non è in pixel, è in "numero di tile" (es. 18 tile di larghezza × 15 di altezza).
+> - `get_used_rect()` restituisce il **rettangolo** che contiene tutte le tile che hai disegnato. Non è in pixel, è in "numero di tile" (es. 100 tile di larghezza × 15 di altezza).
 > - `tile_set.tile_size` è la dimensione di una singola tile in pixel (nel nostro caso 16×16).
 
 8. Infine, imposta i limiti della camera:
@@ -336,17 +327,27 @@ Premi **Ctrl+S** e salva come `res://scenes/moving_platform.tscn`.
 
 Ora che la scena della piattaforma esiste, dobbiamo **istanziarla** dentro la scena principale del gioco — esattamente come il player è già istanziato in `game.tscn`.
 
-### La prima piattaforma (statica)
+Prima di tutto, creiamo un **nodo contenitore** per tenere le piattaforme organizzate:
 
 1. Apri `game.tscn`
 2. Seleziona il nodo radice `Game` nel pannello Scene
-3. Clicca l'icona **🔗** (Link / Instantiate Child Scene) in alto nel pannello Scene — è il bottone con la catena
+3. Fai **click destro** → **Add Child Node...**
+4. Cerca `Node` (il tipo base, senza 2D o 3D) e clicca **Create**
+5. Rinominalo in `Piattaforme` (click destro → **Rename**, oppure `F2`)
 
-<!-- 📸 SCREENSHOT: pannello Scene con il nodo Game selezionato e il bottone "Instantiate Child Scene" (icona catena) evidenziato -->
+> [!TIP]
+> Usare nodi contenitore vuoti per raggruppare le cose è una buona abitudine. Quando il livello diventa complesso, avere tutto dentro `Game` diventa caotico. Con un nodo `Piattaforme` sai subito dove sono.
 
-4. Seleziona `scenes/moving_platform.tscn` e clicca **Open**
+### La prima piattaforma (statica)
 
-La piattaforma appare nel viewport. **Spostala** dove vuoi nel livello trascinandola col mouse, o imposta la posizione nell'Inspector (es. `x = 201`, `y = 174`).
+1. Seleziona il nodo `Piattaforme` nel pannello Scene
+2. Clicca l'icona **🔗** (Link / Instantiate Child Scene) in alto nel pannello Scene — è il bottone con la catena
+
+<!-- 📸 SCREENSHOT: pannello Scene con il nodo Piattaforme selezionato e il bottone "Instantiate Child Scene" (icona catena) evidenziato -->
+
+3. Seleziona `scenes/moving_platform.tscn` e clicca **Open**
+
+La piattaforma appare nel viewport. Rinominala in `Piattaforma 1` e **spostala** dove vuoi nel livello trascinandola col mouse, o imposta la posizione nell'Inspector (es. `x = 201`, `y = 179`).
 
 <!-- 📸 SCREENSHOT: game.tscn nel viewport con la piattaforma posizionata nel livello -->
 
@@ -354,14 +355,14 @@ La piattaforma appare nel viewport. **Spostala** dove vuoi nel livello trascinan
 
 Ripeti gli stessi passaggi per aggiungere una **seconda** piattaforma:
 
-1. Seleziona `Game` → icona **🔗** → seleziona `moving_platform.tscn` → **Open**
+1. Seleziona `Piattaforme` → icona **🔗** → seleziona `moving_platform.tscn` → **Open**
 2. Posizionala in un punto diverso del livello (es. `x = 391`, `y = 147`)
-3. Nel pannello Scene, rinomina questa seconda istanza in `h_moving_platform` (click destro → **Rename**, oppure seleziona e premi `F2`)
+3. Nel pannello Scene, rinomina questa seconda istanza in `Piattaforma Animata` (click destro → **Rename**, oppure `F2`)
 
-<!-- 📸 SCREENSHOT: pannello Scene di game.tscn con le due piattaforme istanziate visibili, quella rinominata "h_moving_platform" -->
+<!-- 📸 SCREENSHOT: pannello Scene di game.tscn con il nodo Piattaforme e le due piattaforme istanziate visibili -->
 
 > [!TIP]
-> Perché rinominarla? Perché tra poco ne animeremo solo una. Avere nomi diversi aiuta a capire quale è quale nel pannello Scene. La "h" sta per "horizontal" — si muoverà in orizzontale.
+> Perché rinominarla? Perché tra poco ne animeremo solo una. Avere nomi diversi aiuta a capire quale è quale nel pannello Scene.
 
 ### Prova
 
@@ -371,15 +372,15 @@ Premi **▶**. Le due piattaforme sono nel livello e puoi saltarci sopra! Prova 
 
 ## 7. Animare la piattaforma con l'AnimationPlayer
 
-Vogliamo che `h_moving_platform` si muova avanti e indietro in orizzontale. Per farlo usiamo l'**AnimationPlayer** — un nodo di Godot che può animare **qualsiasi proprietà** di qualsiasi nodo nel tempo (posizione, colore, trasparenza, scala...).
+Vogliamo che `Piattaforma Animata` si muova avanti e indietro in orizzontale. Per farlo usiamo l'**AnimationPlayer** — un nodo di Godot che può animare **qualsiasi proprietà** di qualsiasi nodo nel tempo (posizione, colore, trasparenza, scala...).
 
 ### Aggiungi l'AnimationPlayer
 
-1. In `game.tscn`, seleziona il nodo `h_moving_platform` nel pannello Scene
+1. In `game.tscn`, seleziona il nodo `Piattaforma Animata` nel pannello Scene
 2. Fai **click destro** → **Add Child Node...**
 3. Cerca `AnimationPlayer` e clicca **Create**
 
-<!-- 📸 SCREENSHOT: pannello Scene con AnimationPlayer come figlio di h_moving_platform -->
+<!-- 📸 SCREENSHOT: pannello Scene con AnimationPlayer come figlio di Piattaforma Animata -->
 
 > [!IMPORTANT]
 > **Perché l'AnimationPlayer è figlio della piattaforma e non di Game?** Perché l'animazione riguarda la piattaforma. In Godot è buona pratica tenere ogni cosa vicino a ciò che controlla. Se domani cancelli la piattaforma, l'animazione se ne va insieme a lei — non restano pezzi orfani in giro.
@@ -402,11 +403,11 @@ Vogliamo che `h_moving_platform` si muova avanti e indietro in orizzontale. Per 
 
 Ora diciamo all'AnimationPlayer **cosa** animare: la posizione della piattaforma.
 
-1. Assicurati che nel pannello Scene sia selezionato il nodo `h_moving_platform` (il **genitore** dell'AnimationPlayer, non l'AnimationPlayer stesso)
+1. Assicurati che nel pannello Scene sia selezionato il nodo `Piattaforma Animata` (il **genitore** dell'AnimationPlayer, non l'AnimationPlayer stesso)
 2. Nell'**Inspector**, trova la proprietà **Position** (dentro la sezione **Node2D → Transform**)
 3. Clicca sull'icona della **chiave** 🔑 accanto a Position
 
-<!-- 📸 SCREENSHOT: Inspector di h_moving_platform con la proprietà Position e l'icona chiave evidenziata -->
+<!-- 📸 SCREENSHOT: Inspector di Piattaforma Animata con la proprietà Position e l'icona chiave evidenziata -->
 
 4. Godot chiede se vuoi creare una nuova traccia — clicca **Create**
 5. Nella timeline in basso appare un **rombo** (un keyframe) al secondo 0 — è la posizione iniziale della piattaforma
@@ -417,7 +418,7 @@ Ora diciamo all'AnimationPlayer **cosa** animare: la posizione della piattaforma
 
 <!-- 📸 SCREENSHOT: pannello Animation con la testina blu spostata al secondo 3 -->
 
-2. Nel **viewport**, seleziona `h_moving_platform` e **spostala** nella posizione dove vuoi che arrivi alla fine dell'animazione (es. spostandola di circa 55 pixel a destra, posizione `x = 446`, `y = 147`)
+2. Nel **viewport**, seleziona `Piattaforma Animata` e **spostala** nella posizione dove vuoi che arrivi alla fine dell'animazione (es. spostandola di circa 55 pixel a destra, posizione `x = 446`, `y = 147`)
 3. Clicca di nuovo sull'icona **chiave** 🔑 accanto a Position nell'Inspector
 4. Un nuovo keyframe appare al secondo 3
 
@@ -436,9 +437,65 @@ Vogliamo che l'animazione parta da sola quando il gioco inizia:
 
 ### Prova
 
-Premi **▶**. La piattaforma `h_moving_platform` dovrebbe muoversi avanti e indietro! Prova a saltarci sopra: il player viene **trascinato** insieme alla piattaforma.
+Premi **▶**. La `Piattaforma Animata` dovrebbe muoversi avanti e indietro! Prova a saltarci sopra: il player viene **trascinato** insieme alla piattaforma.
 
 Se il player non viene trascinato, controlla di aver usato `AnimatableBody2D` e non `StaticBody2D` come root della scena `moving_platform.tscn`.
+
+---
+
+## 8. Mettiamo ordine nella scena
+
+Il gioco funziona, ma se guardiamo il pannello **Scene** di `game.tscn`, l'albero sta diventando disordinato: i TileMapLayer hanno nomi lunghi e sono tutti allo stesso livello, mescolati con il player e le piattaforme. Prendiamoci un minuto per riorganizzare.
+
+### Raggruppa i TileMapLayer
+
+Creiamo un nodo contenitore per le tile, come abbiamo fatto per le piattaforme:
+
+1. In `game.tscn`, seleziona il nodo `Game`
+2. Fai **click destro** → **Add Child Node...** → cerca `Node` → **Create**
+3. Rinominalo in `Tiles`
+
+Ora trascina i tre TileMapLayer **dentro** il nodo `Tiles`:
+
+4. Nel pannello Scene, clicca su `TileMapLayer background` e **trascinalo** sopra il nodo `Tiles` — diventa suo figlio
+5. Fai lo stesso con `TileMapLayer platforms` e `TileMapLayer foreground`
+
+<!-- 📸 SCREENSHOT: pannello Scene con i tre TileMapLayer trascinati dentro il nodo Tiles -->
+
+> [!TIP]
+> Per trascinare un nodo dentro un altro nel pannello Scene, tienilo premuto col mouse e muovilo sopra il nodo destinazione. Quando vedi la **linea di inserimento** apparire *dentro* il nodo (non sopra o sotto), rilascia.
+
+### Rinomina i TileMapLayer
+
+I nomi `TileMapLayer background`, `TileMapLayer platforms` ecc. sono lunghi e ripetitivi. Ora che sono dentro il contenitore `Tiles`, possiamo accorciarli:
+
+1. Seleziona `TileMapLayer background` → **F2** → rinomina in `Background`
+2. Seleziona `TileMapLayer platforms` → **F2** → rinomina in `Platforms`
+3. Seleziona `TileMapLayer foreground` → **F2** → rinomina in `Foreground`
+
+### L'albero finale
+
+Controlla che `game.tscn` abbia questa struttura:
+
+```
+Game
+├── player
+├── Tiles
+│   ├── Background
+│   ├── Platforms
+│   └── Foreground
+└── Piattaforme
+    ├── Piattaforma 1
+    └── Piattaforma Animata
+        └── AnimationPlayer
+```
+
+Molto più pulito! Ogni gruppo di cose ha il suo contenitore, e i nomi sono corti e chiari.
+
+> [!IMPORTANT]
+> **Rinominare i nodi non rompe niente?** In questo caso no, perché nessuno script cerca i TileMapLayer per nome. Lo script della camera usa il **gruppo** `limits`, che resta attaccato al nodo indipendentemente da come lo chiami. Ecco un altro motivo per cui i gruppi sono utili.
+
+Salva con **Ctrl+S**.
 
 ---
 
@@ -447,11 +504,12 @@ Se il player non viene trascinato, controlla di aver usato `AnimatableBody2D` e 
 Riassumiamo quello che abbiamo costruito in questa lezione:
 
 - ✅ Il player si muove a una **velocità controllata** (SPEED = 100, JUMP = -270)
-- ✅ La **Camera2D** segue il player con smoothing e non mostra il vuoto ai bordi
+- ✅ La **Camera2D** segue il player e non mostra il vuoto ai bordi
 - ✅ Il player appare **davanti** a tutti gli elementi decorativi (Z Index)
 - ✅ Abbiamo una **piattaforma mobile** che si muove avanti e indietro
 - ✅ Il player viene **trascinato** dalla piattaforma quando ci sta sopra
 - ✅ Si può saltare **dal basso** attraverso la piattaforma (one-way collision)
+- ✅ La scena `game.tscn` è **ordinata** con nodi contenitore (`Tiles`, `Piattaforme`)
 
 <!-- 📸 SCREENSHOT: il gioco in esecuzione con il risultato finale della lezione — player su una piattaforma mobile, camera centrata -->
 
@@ -471,6 +529,6 @@ Ecco alcune cose che puoi provare a fare da solo:
 
 ## Prossima lezione
 
-Il gioco inizia a funzionare: ci si muove, si salta, la camera segue l'azione e ci sono piattaforme mobili. Ma per ora non c'è niente di **pericoloso** e niente da **raccogliere** — non c'è motivo di giocare.
+Il gioco inizia a funzionare: ci si muove, si salta, la camera segue l'azione e ci sono piattaforme mobili. Ma il player ha un problema evidente: mostra sempre la stessa animazione. Che stia fermo, che corra o che salti, l'immagine è identica — sembra un pupazzo che scivola sul pavimento.
 
-Nella prossima lezione aggiungeremo i **nemici** che ti eliminano, le **monete** da raccogliere e le **killzone** (zone di morte, tipo cadere nel vuoto). Il gioco inizierà ad avere un obiettivo.
+Nella prossima lezione daremo **vita** al personaggio: aggiungeremo le animazioni di **corsa**, **salto** e **capriola**, e riscriveremo lo script di movimento con una **macchina a stati** — un modo elegante per organizzare il codice quando il personaggio ha tanti comportamenti diversi.

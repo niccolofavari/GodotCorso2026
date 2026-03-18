@@ -4,6 +4,11 @@
 [ext_resource type="PackedScene" uid="uid://bx7vqi70qkif5" path="res://scenes/player.tscn" id="1_uwrxv"]
 [ext_resource type="TileSet" uid="uid://dlfa4cbc7oyvf" path="res://assets/sprites/world_tileset_resource.tres" id="2_yqjtg"]
 [ext_resource type="PackedScene" uid="uid://vq207h1g5yph" path="res://scenes/moving_platform.tscn" id="4_lbhrr"]
+[ext_resource type="PackedScene" uid="uid://dtvio1vuc0ii6" path="res://scenes/coin.tscn" id="5_iywne"]
+[ext_resource type="PackedScene" uid="uid://dofxc2bh5gi7b" path="res://scenes/killzone.tscn" id="6_p57ef"]
+[ext_resource type="PackedScene" uid="uid://dftn8qp1u0oke" path="res://scenes/enemy.tscn" id="7_u5sy4"]
+
+[sub_resource type="WorldBoundaryShape2D" id="WorldBoundaryShape2D_u5sy4"]
 
 [sub_resource type="Animation" id="Animation_lbhrr"]
 length = 0.001
@@ -49,7 +54,23 @@ script = ExtResource("1_lnu2h")
 [node name="player" parent="." unique_id=1243357262 instance=ExtResource("1_uwrxv")]
 position = Vector2(154, 192)
 collision_mask = 10
-z_index = 1
+
+[node name="Killzone" parent="." unique_id=1167341872 instance=ExtResource("6_p57ef")]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Killzone" unique_id=1530862327]
+position = Vector2(0, 242)
+shape = SubResource("WorldBoundaryShape2D_u5sy4")
+
+[node name="Enemies" type="Node" parent="." unique_id=1146637780]
+
+[node name="Enemy 1" parent="Enemies" unique_id=238708289 instance=ExtResource("7_u5sy4")]
+position = Vector2(56, 160)
+
+[node name="Enemy 2" parent="Enemies" unique_id=1193853452 instance=ExtResource("7_u5sy4")]
+position = Vector2(271, 192)
+
+[node name="Enemy 3" parent="Enemies" unique_id=1458906855 instance=ExtResource("7_u5sy4")]
+position = Vector2(680, 144)
 
 [node name="Tiles" type="Node" parent="." unique_id=1135500099]
 
@@ -86,3 +107,26 @@ position = Vector2(391, 147)
 [node name="AnimationPlayer" type="AnimationPlayer" parent="Piattaforme/Piattaforma Animata" unique_id=974064086]
 libraries/ = SubResource("AnimationLibrary_p57ef")
 autoplay = &"moving"
+
+[node name="Coins" type="Node" parent="." unique_id=1280104116]
+
+[node name="Coin" parent="Coins" unique_id=271872258 instance=ExtResource("5_iywne")]
+position = Vector2(246, 172)
+
+[node name="Coin2" parent="Coins" unique_id=1053789788 instance=ExtResource("5_iywne")]
+position = Vector2(265, 172)
+
+[node name="Coin3" parent="Coins" unique_id=1530436281 instance=ExtResource("5_iywne")]
+position = Vector2(422, 147)
+
+[node name="Coin4" parent="Coins" unique_id=2039173920 instance=ExtResource("5_iywne")]
+position = Vector2(536, 104)
+
+[node name="Coin5" parent="Coins" unique_id=170851376 instance=ExtResource("5_iywne")]
+position = Vector2(568, 88)
+
+[node name="Coin6" parent="Coins" unique_id=900204920 instance=ExtResource("5_iywne")]
+position = Vector2(600, 72)
+
+[node name="Coin7" parent="Coins" unique_id=1977860033 instance=ExtResource("5_iywne")]
+position = Vector2(632, 56)

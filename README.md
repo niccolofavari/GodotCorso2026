@@ -36,9 +36,9 @@ Se ti perdi o qualcosa non funziona, puoi sempre **aprire la cartella della lezi
 |---|---|---|
 | 01 | [Il primo livello e il primo personaggio](lezione-01/README.md) | Installiamo Godot, costruiamo il livello con le tile, creiamo il player con animazione e collisione, scriviamo il primo script di movimento |
 | 02 | [Camera, velocità e piattaforme mobili](lezione-02/README.md) | Rallentiamo il player, aggiungiamo la Camera2D con limiti, creiamo piattaforme mobili con AnimationPlayer |
-| 03 | Nemici, monete e killzone | *In arrivo* |
-| 04 | Animazioni del player e suoni | *In arrivo* |
-| 05 | Musica, punteggio e rifinitura | *In arrivo* |
+| 03 | [Animazioni e macchina a stati](lezione-03/README.md) | Aggiungiamo le animazioni di corsa, salto e capriola, riscriviamo lo script di movimento con una macchina a stati |
+| 04 | [Nemici, monete e killzone](lezione-04/README.md) | Creiamo le monete da raccogliere, i nemici che pattugliano e le zone mortali con effetto slow-motion |
+| 05 | Suoni, musica, punteggio e rifinitura | *In arrivo* |
 
 > [!NOTE]
 > Le lezioni vengono pubblicate progressivamente durante l'anno. Se una lezione non è ancora cliccabile, sarà disponibile a breve.
