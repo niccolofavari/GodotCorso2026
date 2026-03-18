@@ -103,6 +103,7 @@ collision_layer = 4
 script = ExtResource("1_i64fm")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=596524066]
+z_index = 10
 sprite_frames = SubResource("SpriteFrames_ls27i")
 autoplay = "default"
 frame_progress = 0.27828535
