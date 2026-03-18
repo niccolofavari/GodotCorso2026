@@ -69,6 +69,9 @@ position = Vector2(56, 160)
 [node name="Enemy 2" parent="Enemies" unique_id=1193853452 instance=ExtResource("7_u5sy4")]
 position = Vector2(271, 192)
 
+[node name="Node2D" parent="Enemies" unique_id=1458906855 instance=ExtResource("7_u5sy4")]
+position = Vector2(680, 144)
+
 [node name="Tiles" type="Node" parent="." unique_id=1135500099]
 
 [node name="Background" type="TileMapLayer" parent="Tiles" unique_id=675644669]
